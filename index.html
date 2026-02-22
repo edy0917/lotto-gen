@@ -1,44 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8410908069473405"
-     crossorigin="anonymous"></script>
 <meta charset="UTF-8">
-<meta property="og:title" content="로또 번호 생성기 | 1등 당첨 기원 조합">
-<meta property="og:description" content="나만의 전략으로 번호를 조합하세요. 포함/제외 기능 제공.">
-<meta property="og:url" content="https://luckyty.co.kr">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://luckyty.co.kr/og-image.png">
-<title>로또 번호 생성기 | 고급 추천 조합</title>
-
-<meta name="description" content="로또 번호 생성기 - 포함/제외 설정, 구간별 추천, 희귀 조합 분석 제공">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link rel="manifest" href="manifest.json">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KS788P6MEG"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<title>로또 번호 생성기</title>
 
-  gtag('config', 'G-KS788P6MEG');
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "로또 번호 생성기",
-  "url": "https://luckyty.co.kr",
-  "description": "구간별 추천 및 희귀 조합 분석을 제공하는 로또 번호 자동 생성 도구입니다.",
-  "applicationCategory": "GameApplication",
-  "operatingSystem": "All"
-}
-</script>
 <style>
 
 body{
-    font-family:Arial;
+    font-family: Arial;
     background:#f4f4f4;
     text-align:center;
 }
@@ -70,25 +41,6 @@ button{
     margin-top:20px;
 }
 
-.grid{
-    display:grid;
-    grid-template-columns:repeat(9,1fr);
-    gap:6px;
-    margin-top:20px;
-}
-
-.num{
-    padding:12px;
-    background:#eee;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-.num.active{
-    background:#4caf50;
-    color:white;
-}
-
 </style>
 </head>
 
@@ -97,8 +49,6 @@ button{
 <div class="container">
 
 <h1>🎯 로또 번호 생성기</h1>
-
-<p>※ 포함 / 제외 / 번호대별 조건 지원</p>
 
 <h3>✅ 포함 번호 (쉼표)</h3>
 <input type="text" id="includeNums" placeholder="1,5,7">
@@ -119,20 +69,26 @@ button{
 <option value="OR">OR 조건</option>
 </select>
 
-<h3>🎯 희귀 패턴</h3>
+<h3>📌 추천 줄 수 (최대 5)</h3>
+<input type="number" id="lineCount" value="1" min="1" max="5">
+
+<h3>🔥 희귀 패턴</h3>
 <label>
-<input type="checkbox" id="rare"> 희귀 조합 활성
+<input type="checkbox" id="rare">
+희귀 조합 활성
 </label>
 
 <br>
 
-<button onclick="generate()">번호 생성 (6개)</button>
+<button onclick="generate()">번호 생성</button>
 
 <div id="result" class="result"></div>
 
 </div>
+
 <script>
 
+/* 입력 파싱 */
 function parseInput(id){
 
     let val=document.getElementById(id).value;
@@ -143,18 +99,16 @@ function parseInput(id){
         .filter(x=>!isNaN(x) && x>=1 && x<=45);
 }
 
-/* 생성 */
+/* 생성기 */
 function generate(){
 
     let include=parseInput("includeNums");
     let exclude=parseInput("excludeNums");
 
-    let lineCount=parseInt(
-        document.getElementById("lineCount").value
-    );
+    let lineCount=parseInt(document.getElementById("lineCount").value)||1;
 
-    if(lineCount > 5) lineCount=5;
-    if(lineCount < 1) lineCount=1;
+    if(lineCount>5) lineCount=5;
+    if(lineCount<1) lineCount=1;
 
     let logic=document.getElementById("logicType").value;
 
@@ -165,15 +119,11 @@ function generate(){
         {start:31,end:45,count:parseInt(document.getElementById("band4").value)||0}
     ];
 
-    let output="";
-
     function satisfyBand(arr){
 
         for(let band of bands){
 
-            let cnt=arr.filter(n=>
-                n>=band.start && n<=band.end
-            ).length;
+            let cnt=arr.filter(n=>n>=band.start && n<=band.end).length;
 
             if(cnt < band.count)
                 return false;
@@ -188,7 +138,8 @@ function generate(){
             pool.push(i);
     }
 
-    /* 줄 생성 */
+    let output="";
+
     for(let line=0; line<lineCount; line++){
 
         let result=new Set();
@@ -229,6 +180,17 @@ function generate(){
         }
 
         let numbers=[...result].slice(0,6).sort((a,b)=>a-b);
+
+        if(document.getElementById("rare").checked){
+            numbers=numbers.map(n=>{
+                if(Math.random()>0.5){
+                    return n%2===0 ? (n+1<=45?n+1:n-1) : n;
+                }
+                return n;
+            });
+
+            numbers=[...new Set(numbers)].slice(0,6).sort((a,b)=>a-b);
+        }
 
         output+="🎯 추천 번호 : "+numbers.join(", ")+"<br>";
     }
