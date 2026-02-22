@@ -2,105 +2,60 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>로또 회차별 조회</title>
+<title>당첨번호 히스토리</title>
+
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
-    text-align: center;
+body{
+    font-family: Arial;
+    background:#f4f4f4;
+    text-align:center;
 }
-h1 {
-    margin-top: 30px;
+
+.container{
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:20px;
 }
-#searchBox {
-    margin: 20px;
-    padding: 8px;
-    width: 200px;
-    font-size: 16px;
-}
-.card {
-    background: white;
-    margin: 10px auto;
-    padding: 15px;
-    width: 400px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.numbers {
-    margin-top: 10px;
-}
-.ball {
-    display: inline-block;
-    width: 35px;
-    height: 35px;
-    line-height: 35px;
-    border-radius: 50%;
-    color: white;
-    margin: 3px;
-    font-weight: bold;
-}
-.bonus {
-    border: 2px solid black;
+
+.item{
+    border-bottom:1px solid #ddd;
+    padding:12px;
+    font-size:18px;
 }
 </style>
+
 </head>
+
 <body>
 
-<h1>🎯 로또 회차별 당첨번호</h1>
+<div class="container">
 
-<input type="number" id="searchBox" placeholder="회차 입력">
+<h2>📜 생성 히스토리 (당첨번호 화면)</h2>
 
-<div id="history"></div>
+<div id="historyList"></div>
+
+<br>
+
+<button onclick="location.href='index.html'">
+🎯 생성기로 돌아가기
+</button>
+
+</div>
 
 <script>
-function getColor(num) {
-    if (num <= 10) return "#fbc400";
-    if (num <= 20) return "#69c8f2";
-    if (num <= 30) return "#ff7272";
-    if (num <= 40) return "#aaa";
-    return "#b0d840";
-}
 
-fetch("lotto_data.json")
-    .then(res => res.json())
-    .then(data => {
-        data.sort((a,b) => b.round - a.round);
-        render(data);
+let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
 
-        document.getElementById("searchBox").addEventListener("input", e => {
-            const value = e.target.value;
-            if (!value) {
-                render(data);
-            } else {
-                const filtered = data.filter(d => d.round == value);
-                render(filtered);
-            }
-        });
-    });
+let html=history.map(h=>`
+<div class="item">
+⏰ ${h.time}<br>
+🎯 ${h.numbers.join(", ")}
+</div>
+`).join("");
 
-function render(data) {
-    const container = document.getElementById("history");
-    container.innerHTML = "";
+document.getElementById("historyList").innerHTML=html;
 
-    data.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        let numbersHTML = "";
-        item.numbers.forEach(n => {
-            numbersHTML += `<span class="ball" style="background:${getColor(n)}">${n}</span>`;
-        });
-
-        numbersHTML += `<span class="ball bonus" style="background:${getColor(item.bonus)}">${item.bonus}</span>`;
-
-        card.innerHTML = `
-            <h3>${item.round}회</h3>
-            <div class="numbers">${numbersHTML}</div>
-        `;
-
-        container.appendChild(card);
-    });
-}
 </script>
 
 </body>
