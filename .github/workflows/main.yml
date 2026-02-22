@@ -1,9 +1,14 @@
-name: Daily Twitter Summary Update
+name: Daily Image Update
 
 on:
   schedule:
-    - cron: '0 15 * * *' # 매일 한국 시간 00:00 (UTC 15:00) 실행
-  workflow_dispatch: # 수동 실행 버튼 활성화
+    - cron: '0 15 * * *' # 매일 실행
+  workflow_dispatch:     # 수동 실행 버튼
+
+permissions:             # 권한 명시 (이게 없으면 뻗을 수 있음)
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -11,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -18,16 +25,16 @@ jobs:
           python_version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install Pillow
+        run: pip install requests
 
-      - name: Run script
+      - name: Run AI Image Generator
         run: python app.py
 
-      - name: Commit and Push changes
+      - name: Commit and Push Image Only
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add images/today_summary.png
-          git commit -m "Daily update: $(date +'%Y-%m-%d')" || exit 0
+          # 변경사항이 있을 때만 커밋 (없으면 통과해서 에러 방지)
+          git commit -m "Update Daily AI Image" || echo "No changes to commit"
           git push
