@@ -255,6 +255,22 @@ function generate(){
     }
 
     document.getElementById("result").innerHTML=output;
+
+    /* ⭐ 히스토리 저장 */
+    let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
+
+    generatedNumbers.forEach(numbers=>{
+
+        history.unshift({
+            time:new Date().toLocaleString(),
+            numbers:numbers
+        });
+
+    });
+
+    history=history.slice(0,50);
+
+    localStorage.setItem("lottoHistory",JSON.stringify(history));
 }
 
 </script>
