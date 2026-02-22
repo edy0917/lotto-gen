@@ -1,51 +1,37 @@
+import requests
 import os
-from PIL import Image, ImageDraw, ImageFont
 import datetime
 
-# 1. 데이터 수집 함수 (예시로 텍스트 리스트 생성)
-def get_twitter_data():
-    # 실제 구현 시 여기서 트위터 수집 라이브러리를 사용합니다.
-    # 현재는 예시 데이터를 생성합니다.
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    tweets = [
-        f"📅 날짜: {today}",
-        "🔥 오늘의 인기 키워드: #로또 #당첨운",
-        "💬 주요 의견: 오늘 번호 조합 대박이네요!",
-        "🚀 리트윗 많은 글: 이번 주 명당 정보 공유합니다.",
-        "✨ AI 분석 결과: 행운의 숫자는 7, 24, 38"
-    ]
-    return tweets
+def get_twitter_keywords():
+    # 실제 구현 시 여기서 트위터 글을 수집하여 키워드만 추출합니다.
+    # 글로벌 수익형 웹을 위해 영어 키워드로 변환하는 과정이 포함됩니다.
+    return "Cyberpunk city, neon lights, high tech, futuristic skyscraper, solar panels"
 
-# 2. 이미지 생성 함수
-def create_image(data):
-    # 배경 이미지 생성 (800x600, 하늘색 배경)
-    img = Image.new('RGB', (800, 600), color=(235, 245, 255))
-    d = ImageDraw.Draw(img)
+def generate_ai_image(prompt):
+    print(f"이미지 생성 중: {prompt}")
     
-    # 폰트 설정 (GitHub 서버에는 한글 폰트가 없으므로 나중에 폰트 파일도 같이 올려야 함)
-    # 여기서는 기본 폰트를 사용하지만, 한글 출력려면 .ttf 파일이 필요합니다.
+    # Pollinations AI를 사용하여 무료로 이미지 생성 (API 키 불필요)
+    # 이미지 사이즈는 글로벌 규격인 1080x1080으로 설정
+    encoded_prompt = requests.utils.quote(prompt)
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1080&nologo=true"
+    
     try:
-        font = ImageFont.truetype("NanumGothic.ttf", 25)
-    except:
-        font = ImageFont.load_default()
-
-    # 텍스트 그리기
-    margin = 50
-    offset = 100
-    d.text((margin, 50), "오늘의 트위터 요약 리포트", fill=(0, 50, 150))
-    
-    for line in data:
-        d.text((margin, offset), line, fill=(50, 50, 50), font=font)
-        offset += 60
-
-    # images 폴더가 없으면 생성
-    if not os.path.exists('images'):
-        os.makedirs('images')
-        
-    # 이미지 저장
-    img.save('images/today_summary.png')
-    print("이미지 생성 완료: images/today_summary.png")
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            if not os.path.exists('images'):
+                os.makedirs('images')
+            
+            with open('images/today_summary.png', 'wb') as f:
+                f.write(response.content)
+            print("순수 AI 이미지 생성 및 저장 완료!")
+        else:
+            print("이미지 생성 실패")
+    except Exception as e:
+        print(f"에러 발생: {e}")
 
 if __name__ == "__main__":
-    tweets = get_twitter_data()
-    create_image(tweets)
+    # 1. 트위터 키워드 가져오기
+    keywords = get_twitter_keywords()
+    
+    # 2. 키워드 기반 이미지 생성
+    generate_ai_image(keywords)
