@@ -18,7 +18,7 @@ const pageSize=100;
 async function loadLotto(){
 
     try{
-        const res=await fetch("lotto_data.json");
+        const res=await fetch("./lotto_data.json");
         lottoData=await res.json();
 
         renderPage();
