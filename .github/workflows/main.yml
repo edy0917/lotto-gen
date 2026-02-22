@@ -1,1 +1,33 @@
+name: Daily Twitter Summary Update
 
+on:
+  schedule:
+    - cron: '0 15 * * *' # 매일 한국 시간 00:00 (UTC 15:00) 실행
+  workflow_dispatch: # 수동 실행 버튼 활성화
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python_version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install Pillow
+
+      - name: Run script
+        run: python app.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add images/today_summary.png
+          git commit -m "Daily update: $(date +'%Y-%m-%d')" || exit 0
+          git push
