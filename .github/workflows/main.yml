@@ -1,14 +1,14 @@
 name: Daily Image Update
 
 on:
-  workflow_dispatch: # 수동 실행 버튼
+  workflow_dispatch: 
   schedule:
     - cron: '0 15 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 아래 permissions 부분이 없어서 128 에러가 났던 것입니다.
+    # 이 부분이 빠지면 파일 업로드(Push)가 안 되어 에러가 납니다.
     permissions:
       contents: write
     steps:
