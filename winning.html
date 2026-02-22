@@ -1,0 +1,69 @@
+<h2>📊 역대 당첨번호</h2>
+
+<div id="lottoData"></div>
+
+<div>
+<button onclick="prevPage()">⬅ 이전</button>
+<span id="pageInfo"></span>
+<button onclick="nextPage()">다음 ➡</button>
+</div>
+
+<script>
+
+let lottoData=[];
+let page=1;
+const pageSize=100;
+
+/* JSON 로드 */
+async function loadLotto(){
+
+    try{
+        const res=await fetch("lotto_data.json");
+        lottoData=await res.json();
+
+        renderPage();
+
+    }catch(e){
+        console.error(e);
+    }
+}
+
+/* 페이지 렌더링 */
+function renderPage(){
+
+    let start=(page-1)*pageSize;
+    let end=start+pageSize;
+
+    let pageData=lottoData.slice(start,end);
+
+    let html=pageData.map(item=>`
+        <div style="border-bottom:1px solid #ddd;padding:10px">
+            <b>${item.round}회</b><br>
+            🎯 ${item.numbers.join(", ")}
+        </div>
+    `).join("");
+
+    document.getElementById("lottoData").innerHTML=html;
+
+    document.getElementById("pageInfo").innerText=
+        `${page} / ${Math.ceil(lottoData.length/pageSize)}`;
+}
+
+/* 페이지 이동 */
+function nextPage(){
+    if(page < Math.ceil(lottoData.length/pageSize)){
+        page++;
+        renderPage();
+    }
+}
+
+function prevPage(){
+    if(page>1){
+        page--;
+        renderPage();
+    }
+}
+
+loadLotto();
+
+</script>
