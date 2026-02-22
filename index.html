@@ -173,7 +173,7 @@ function parseInput(id){
 
 /* 생성 */
 function generate(){
-
+    let generatedNumbers=[];
     let include=parseInput("includeNums");
     let exclude=parseInput("excludeNums");
 
@@ -257,19 +257,29 @@ function generate(){
     document.getElementById("result").innerHTML=output;
 
     /* ⭐ 히스토리 저장 */
-    let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
-
-    generatedNumbers.forEach(numbers=>{
-
-        history.unshift({
-            time:new Date().toLocaleString(),
-            numbers:numbers
-        });
-
-    });
-
+    let history = JSON.parse(localStorage.getItem("lottoHistory") || "[]");
+    
+    /* 생성된 번호 저장 */
+    for(let lineOutput of output.split("<br>")){
+    
+        if(!lineOutput) continue;
+    
+        let nums=lineOutput
+            .replace("🎯 추천 번호 : ","")
+            .split(",")
+            .map(x=>parseInt(x.trim()))
+            .filter(x=>!isNaN(x));
+    
+        if(nums.length===6){
+            history.unshift({
+                time:new Date().toLocaleString(),
+                numbers:nums
+            });
+        }
+    }
+    
     history=history.slice(0,50);
-
+    
     localStorage.setItem("lottoHistory",JSON.stringify(history));
 }
 
