@@ -39,7 +39,7 @@ function renderPage(){
     let html=pageData.map(item=>`
         <div style="border-bottom:1px solid #ddd;padding:10px">
             <b>${item.round}회</b><br>
-            🎯 ${item.numbers.join(", ")} +<b>보너스</b> ${item.bonus}
+            🎯 ${item.numbers.join(", ")} +<b> 보너스</b> ${item.bonus}
         </div>
     `).join("");
 
