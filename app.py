@@ -2,15 +2,13 @@ import requests
 import os
 
 def generate_ai_image():
-    # 1. 키워드 설정 (글로벌 타겟을 위해 영어로만 구성)
-    # 텍스트를 배제하기 위해 'no text, no letters' 문구를 추가했습니다.
-    prompt = "futuristic cyber city, cinematic lighting, 8k, highly detailed, no text, no letters"
-    
-    print(f"Generating image for: {prompt}")
+    # 글로벌 유저를 위한 화려한 배경 프롬프트 (텍스트 제외 옵션 포함)
+    prompt = "high-tech futuristic city, cinematic view, 8k wallpaper, no text, no lettering"
+    print(f"이미지 생성 요청 중: {prompt}")
     
     encoded_prompt = requests.utils.quote(prompt)
-    # nologo=true 옵션으로 깔끔한 이미지만 가져옵니다.
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed=42"
+    # Pollinations AI를 사용해 고퀄리티 이미지를 무료로 가져옵니다.
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1080&nologo=true"
     
     try:
         response = requests.get(image_url, timeout=30)
@@ -20,9 +18,9 @@ def generate_ai_image():
             
             with open('images/today_summary.png', 'wb') as f:
                 f.write(response.content)
-            print("성공: images/today_summary.png 저장 완료")
+            print("성공: 순수 AI 이미지가 images/today_summary.png에 저장되었습니다.")
         else:
-            print(f"실패: 상태 코드 {response.status_code}")
+            print(f"이미지 생성 실패 (코드: {response.status_code})")
     except Exception as e:
         print(f"에러 발생: {e}")
 
