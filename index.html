@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>로또 번호 생성기</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f4f4f4;
+    text-align:center;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+}
+
+input, select{
+    padding:8px;
+    margin:6px;
+    width:80%;
+}
+
+button{
+    padding:14px;
+    font-size:16px;
+    margin:10px;
+    cursor:pointer;
+}
+
+.result{
+    font-size:24px;
+    font-weight:bold;
+    margin-top:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(9,1fr);
+    gap:6px;
+    margin-top:20px;
+}
+
+.num{
+    padding:12px;
+    background:#eee;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.num.active{
+    background:#4caf50;
+    color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎯 로또 번호 생성기</h1>
+
+<p>※ 포함 / 제외 / 번호대별 조건 지원</p>
+
+<h3>✅ 포함 번호 (쉼표)</h3>
+<input type="text" id="includeNums" placeholder="1,5,7">
+
+<h3>🚫 제외 번호</h3>
+<input type="text" id="excludeNums" placeholder="2,3">
+
+<h3>📊 번호대별 개수</h3>
+
+1~10 <input id="band1" type="number" value="0"><br>
+11~20 <input id="band2" type="number" value="0"><br>
+21~30 <input id="band3" type="number" value="0"><br>
+31~45 <input id="band4" type="number" value="0"><br>
+
+<h3>🔗 조건 방식</h3>
+<select id="logicType">
+<option value="AND">AND 조건</option>
+<option value="OR">OR 조건</option>
+</select>
+
+<h3>🎯 희귀 패턴</h3>
+<label>
+<input type="checkbox" id="rare"> 희귀 조합 활성
+</label>
+
+<br>
+
+<button onclick="generate()">번호 생성 (6개)</button>
+
+<div id="result" class="result"></div>
+
+</div>
+<script>
+
+function parseInput(id){
+
+    let val=document.getElementById(id).value;
+    if(!val) return [];
+
+    return val.split(",")
+        .map(x=>parseInt(x.trim()))
+        .filter(x=>!isNaN(x) && x>=1 && x<=45);
+}
+
+/* 생성 */
+function generate(){
+
+    let include=parseInput("includeNums");
+    let exclude=parseInput("excludeNums");
+
+    let lineCount=parseInt(
+        document.getElementById("lineCount").value
+    );
+
+    if(lineCount > 5) lineCount=5;
+    if(lineCount < 1) lineCount=1;
+
+    let logic=document.getElementById("logicType").value;
+
+    let bands=[
+        {start:1,end:10,count:parseInt(document.getElementById("band1").value)||0},
+        {start:11,end:20,count:parseInt(document.getElementById("band2").value)||0},
+        {start:21,end:30,count:parseInt(document.getElementById("band3").value)||0},
+        {start:31,end:45,count:parseInt(document.getElementById("band4").value)||0}
+    ];
+
+    let output="";
+
+    function satisfyBand(arr){
+
+        for(let band of bands){
+
+            let cnt=arr.filter(n=>
+                n>=band.start && n<=band.end
+            ).length;
+
+            if(cnt < band.count)
+                return false;
+        }
+
+        return true;
+    }
+
+    let pool=[];
+    for(let i=1;i<=45;i++){
+        if(!exclude.includes(i))
+            pool.push(i);
+    }
+
+    /* 줄 생성 */
+    for(let line=0; line<lineCount; line++){
+
+        let result=new Set();
+
+        include.forEach(n=>{
+            if(!exclude.includes(n))
+                result.add(n);
+        });
+
+        let attempt=0;
+
+        while(result.size < 6 && attempt < 10000){
+
+            let temp=new Set(result);
+
+            while(temp.size < 6 && pool.length>0){
+
+                let idx=Math.floor(Math.random()*pool.length);
+                temp.add(pool[idx]);
+            }
+
+            let arr=[...temp];
+
+            if(logic==="AND"){
+                if(satisfyBand(arr)){
+                    result=temp;
+                    break;
+                }
+            }
+            else{
+                if(Math.random()>0.5){
+                    result=temp;
+                    break;
+                }
+            }
+
+            attempt++;
+        }
+
+        let numbers=[...result].slice(0,6).sort((a,b)=>a-b);
+
+        output+="🎯 추천 번호 : "+numbers.join(", ")+"<br>";
+    }
+
+    document.getElementById("result").innerHTML=output;
+}
+
+</script>
+
+</body>
+</html>
