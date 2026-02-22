@@ -63,16 +63,23 @@ body{
 
 <script>
 
-let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
+window.onload=function(){
 
-let html=history.map(h=>`
-<div class="item">
-⏰ ${h.time}<br>
-🎯 ${h.numbers.join(", ")}
-</div>
-`).join("");
+    let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
 
-document.getElementById("historyList").innerHTML=html;
+    let html="";
+
+    history.forEach(h=>{
+        html+=`
+        <div class="item">
+        ⏰ ${h.time}<br>
+        🎯 ${h.numbers.join(", ")}
+        </div>
+        `;
+    });
+
+    document.getElementById("historyList").innerHTML=html;
+};
 
 </script>
 
