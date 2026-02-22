@@ -2,71 +2,125 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>역대 로또 당첨번호 조회 | 최신 회차 확인</title>
-<meta name="description" content="역대 로또 당첨번호 조회 페이지. 회차별 당첨번호와 보너스 번호 확인 가능.">
+<title>고급 로또 번호 생성기 | 포함/제외/구간설정</title>
+<meta name="description" content="포함 번호, 제외 번호, 구간별 개수 설정이 가능한 고급 로또 번호 생성기. 희귀 조합 추천 기능 제공.">
 <style>
-body { font-family: Arial; background:#f5f5f5; }
+body { font-family: Arial; background:#f4f4f4; text-align:center; }
 .container { max-width:900px; margin:auto; background:white; padding:20px; }
-table { width:100%; border-collapse:collapse; margin-top:20px; }
-th, td { border:1px solid #ddd; padding:8px; text-align:center; }
-th { background:#333; color:white; }
-.search { margin-top:20px; }
-.highlight { background:#ffeeba; }
-a { text-decoration:none; color:blue; }
+input { width:50px; margin:5px; }
+button { padding:10px 20px; margin:10px; font-size:16px; }
+.section { margin-top:30px; text-align:left; }
+.result { font-size:22px; margin-top:20px; font-weight:bold; }
 </style>
 </head>
 <body>
 
 <div class="container">
-<h1>📊 역대 로또 당첨번호 조회</h1>
+<h1>🎯 고급 로또 번호 생성기</h1>
 
-<div class="search">
-<input type="number" id="roundInput" placeholder="회차 입력">
-<button onclick="searchRound()">검색</button>
-<a href="index.html">← 번호 생성기로 이동</a>
+<div class="section">
+<h3>✅ 반드시 포함할 번호 (쉼표로 구분)</h3>
+<input type="text" id="include" placeholder="예: 3,7">
+
+<h3>❌ 제외할 번호 (쉼표로 구분)</h3>
+<input type="text" id="exclude" placeholder="예: 12,25">
 </div>
 
-<table id="lottoTable">
-<thead>
-<tr>
-<th>회차</th>
-<th>당첨번호</th>
-<th>보너스</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1100</td>
-<td>3, 7, 12, 18, 25, 42</td>
-<td>9</td>
-</tr>
-<tr class="highlight">
-<td>1101</td>
-<td>5, 14, 22, 31, 38, 44</td>
-<td>2</td>
-</tr>
-<tr>
-<td>1102</td>
-<td>1, 9, 17, 23, 33, 40</td>
-<td>11</td>
-</tr>
-</tbody>
-</table>
+<div class="section">
+<h3>📊 구간별 개수 설정 (합계 6)</h3>
+1~10 <input type="number" id="r1" min="0" max="6" value="1">
+11~20 <input type="number" id="r2" min="0" max="6" value="1">
+21~30 <input type="number" id="r3" min="0" max="6" value="1">
+31~40 <input type="number" id="r4" min="0" max="6" value="1">
+41~45 <input type="number" id="r5" min="0" max="6" value="2">
+</div>
+
+<button onclick="generate()">일반 생성</button>
+<button onclick="rareGenerate()">🔥 희귀 조합 추천</button>
+
+<div class="result" id="result"></div>
+
+<div class="section">
+<h2>📌 로또 1등 확률</h2>
+<p>약 1 / 8,145,060 입니다. 모든 번호는 동일한 확률을 가집니다.</p>
+</div>
 
 </div>
 
 <script>
-function searchRound(){
-  let input = document.getElementById("roundInput").value;
-  let rows = document.querySelectorAll("#lottoTable tbody tr");
-  rows.forEach(row=>{
-    row.style.display="none";
-    if(row.children[0].innerText == input){
-      row.style.display="";
-      row.scrollIntoView();
-    }
-  });
+
+function parseInput(id){
+  let val = document.getElementById(id).value;
+  if(!val) return [];
+  return val.split(",").map(x=>parseInt(x.trim())).filter(x=>x>=1 && x<=45);
 }
+
+function generate(){
+  let include = parseInput("include");
+  let exclude = parseInput("exclude");
+
+  let ranges = [
+    {min:1,max:10,count:parseInt(r1.value)},
+    {min:11,max:20,count:parseInt(r2.value)},
+    {min:21,max:30,count:parseInt(r3.value)},
+    {min:31,max:40,count:parseInt(r4.value)},
+    {min:41,max:45,count:parseInt(r5.value)}
+  ];
+
+  let totalCount = ranges.reduce((sum,r)=>sum+r.count,0);
+  if(totalCount !== 6){
+    alert("구간 합계는 6이어야 합니다.");
+    return;
+  }
+
+  let numbers = [...include];
+
+  for(let r of ranges){
+    let pool = [];
+    for(let i=r.min;i<=r.max;i++){
+      if(!numbers.includes(i) && !exclude.includes(i)){
+        pool.push(i);
+      }
+    }
+    while(pool.length && numbers.filter(n=>n>=r.min && n<=r.max).length < r.count){
+      let pick = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+      numbers.push(pick);
+    }
+  }
+
+  if(numbers.length !== 6){
+    alert("조건이 너무 제한적입니다.");
+    return;
+  }
+
+  numbers.sort((a,b)=>a-b);
+  result.innerHTML = "추천 번호 : " + numbers.join(", ");
+}
+
+function rareGenerate(){
+  let numbers = [];
+  while(numbers.length < 6){
+    let num = Math.floor(Math.random()*45)+1;
+    if(!numbers.includes(num)) numbers.push(num);
+  }
+
+  // 희귀 패턴: 모두 홀수 or 모두 짝수
+  if(Math.random() > 0.5){
+    numbers = numbers.map(n=> n%2===0 ? n+1<=45?n+1:n-1 : n);
+  } else {
+    numbers = numbers.map(n=> n%2!==0 ? n+1<=45?n+1:n-1 : n);
+  }
+
+  numbers = [...new Set(numbers)];
+  while(numbers.length<6){
+    let n=Math.floor(Math.random()*45)+1;
+    if(!numbers.includes(n)) numbers.push(n);
+  }
+
+  numbers.sort((a,b)=>a-b);
+  result.innerHTML = "🔥 희귀 조합 추천 : " + numbers.join(", ");
+}
+
 </script>
 
 </body>
