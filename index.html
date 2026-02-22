@@ -11,7 +11,7 @@
 <meta property="og:image" content="https://luckyty.co.kr/og-image.png">
 <title>로또 번호 생성기 | 고급 추천 조합</title>
 
-<meta name="description" content="고급 로또 번호 생성기 - 포함/제외 설정, 구간별 추천, 희귀 조합 분석 제공">
+<meta name="description" content="로또 번호 생성기 - 포함/제외 설정, 구간별 추천, 희귀 조합 분석 제공">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link rel="manifest" href="manifest.json">
@@ -28,7 +28,7 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "고급 로또 번호 생성기",
+  "name": "로또 번호 생성기",
   "url": "https://luckyty.co.kr",
   "description": "구간별 추천 및 희귀 조합 분석을 제공하는 로또 번호 자동 생성 도구입니다.",
   "applicationCategory": "GameApplication",
@@ -95,7 +95,8 @@ button{
 - 홀짝 균형
 - 중복 회피 패턴
 </p>
-
+<h3>추출할 번호 개수 (최대 5개)</h3>
+<input type="number" id="pickCount" min="1" max="5" value="6">
 <h3>번호 선택 (클릭)</h3>
 <div id="grid" class="grid"></div>
 
@@ -146,50 +147,66 @@ for(let i=1;i<=45;i++){
     grid.appendChild(div);
 }
 
-/* 생성 */
+/* 번호 생성 */
 function generate(){
 
-    let numbers=[...selected];
+    let include = selected;
+    let isRare = document.getElementById("rare").checked;
 
-    while(numbers.length<6){
+    let pickCount = parseInt(
+        document.getElementById("pickCount").value
+    );
 
-        let n=Math.floor(Math.random()*45)+1;
+    if(pickCount > 5) pickCount = 5;
+    if(pickCount < 1) pickCount = 1;
 
-        if(!numbers.includes(n))
-            numbers.push(n);
+    let result = new Set();
+
+    /* 포함 번호 먼저 */
+    include.forEach(n=>{
+        if(n>=1 && n<=45)
+            result.add(n);
+    });
+
+    /* 랜덤 풀 */
+    let pool=[];
+    for(let i=1;i<=45;i++){
+        if(!selected.includes(i))
+            pool.push(i);
     }
 
-    /* 희귀 패턴 */
-    if(document.getElementById("rare").checked){
+    /* 부족하면 채우기 */
+    while(result.size < pickCount && pool.length>0){
+
+        let idx=Math.floor(Math.random()*pool.length);
+        result.add(pool[idx]);
+        pool.splice(idx,1);
+    }
+
+    let numbers=[...result];
+
+    /* 희귀 조합 옵션 */
+    if(isRare){
 
         numbers=numbers.map(n=>{
             if(Math.random()>0.5){
-                return n%2===0 ? (n+1<=45?n+1:n-1) : n;
+                return n%2===0 ?
+                    (n+1<=45?n+1:n-1) :
+                    n;
             }
             return n;
         });
+
+        numbers=[...new Set(numbers)];
     }
 
-    numbers=[...new Set(numbers)];
-
+    numbers=numbers.slice(0,pickCount);
     numbers.sort((a,b)=>a-b);
 
     document.getElementById("result").innerText=
         "🎯 추천 번호 : "+numbers.join(", ");
 
-    /* 히스토리 저장 */
-    let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
-
-    history.unshift({
-        time:new Date().toLocaleString(),
-        numbers:numbers
-    });
-
-    history=history.slice(0,50);
-
-    localStorage.setItem("lottoHistory",JSON.stringify(history));
 }
-
 /* PWA Service Worker */
 if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js');
