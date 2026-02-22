@@ -1,124 +1,165 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+
 <meta charset="UTF-8">
-<title>고급 로또 번호 생성기 | 포함/제외/구간설정</title>
-<meta name="description" content="포함 번호, 제외 번호, 구간별 개수 설정이 가능한 고급 로또 번호 생성기. 희귀 조합 추천 기능 제공.">
+
+<title>로또 번호 생성기 | 고급 추천 조합</title>
+
+<meta name="description" content="고급 로또 번호 생성기 - 포함/제외 설정, 구간별 추천, 희귀 조합 분석 제공">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="manifest" href="manifest.json">
+
 <style>
-body { font-family: Arial; background:#f4f4f4; text-align:center; }
-.container { max-width:900px; margin:auto; background:white; padding:20px; }
-input { width:50px; margin:5px; }
-button { padding:10px 20px; margin:10px; font-size:16px; }
-.section { margin-top:30px; text-align:left; }
-.result { font-size:22px; margin-top:20px; font-weight:bold; }
+
+body{
+    font-family: Arial;
+    background:#f4f4f4;
+    text-align:center;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(9,1fr);
+    gap:8px;
+}
+
+.num{
+    padding:14px;
+    border-radius:10px;
+    background:#eee;
+    cursor:pointer;
+}
+
+.num.active{
+    background:#4caf50;
+    color:white;
+}
+
+button{
+    padding:12px 20px;
+    font-size:16px;
+    margin:10px;
+}
+
+.result{
+    font-size:24px;
+    font-weight:bold;
+    margin-top:20px;
+}
+
 </style>
 </head>
+
 <body>
 
 <div class="container">
-<h1>🎯 고급 로또 번호 생성기</h1>
 
-<div class="section">
-<h3>✅ 반드시 포함할 번호 (쉼표로 구분)</h3>
-<input type="text" id="include" placeholder="예: 3,7">
+<h1>🎯 로또 번호 생성기</h1>
 
-<h3>❌ 제외할 번호 (쉼표로 구분)</h3>
-<input type="text" id="exclude" placeholder="예: 12,25">
-</div>
+<p>
+추천 이유:
+- 구간 균형
+- 홀짝 균형
+- 중복 회피 패턴
+</p>
 
-<div class="section">
-<h3>📊 구간별 개수 설정 (합계 6)</h3>
-1~10 <input type="number" id="r1" min="0" max="6" value="1">
-11~20 <input type="number" id="r2" min="0" max="6" value="1">
-21~30 <input type="number" id="r3" min="0" max="6" value="1">
-31~40 <input type="number" id="r4" min="0" max="6" value="1">
-41~45 <input type="number" id="r5" min="0" max="6" value="2">
-</div>
+<h3>번호 선택 (클릭)</h3>
+<div id="grid" class="grid"></div>
 
-<button onclick="generate()">일반 생성</button>
-<button onclick="rareGenerate()">🔥 희귀 조합 추천</button>
+<br>
 
-<div class="result" id="result"></div>
+<label>
+<input type="checkbox" id="rare">
+🔥 희귀 조합 추천
+</label>
 
-<div class="section">
-<h2>📌 로또 1등 확률</h2>
-<p>약 1 / 8,145,060 입니다. 모든 번호는 동일한 확률을 가집니다.</p>
-</div>
+<br>
+
+<button onclick="generate()">번호 생성</button>
+
+<div id="result" class="result"></div>
 
 </div>
 
 <script>
 
-function parseInput(id){
-  let val = document.getElementById(id).value;
-  if(!val) return [];
-  return val.split(",").map(x=>parseInt(x.trim())).filter(x=>x>=1 && x<=45);
+/* 번호 그리드 */
+let grid=document.getElementById("grid");
+let selected=[];
+
+for(let i=1;i<=45;i++){
+    let div=document.createElement("div");
+    div.className="num";
+    div.innerText=i;
+
+    div.onclick=()=>{
+        div.classList.toggle("active");
+
+        if(selected.includes(i))
+            selected=selected.filter(x=>x!==i);
+        else
+            selected.push(i);
+    };
+
+    grid.appendChild(div);
 }
 
+/* 생성 */
 function generate(){
-  let include = parseInput("include");
-  let exclude = parseInput("exclude");
 
-  let ranges = [
-    {min:1,max:10,count:parseInt(r1.value)},
-    {min:11,max:20,count:parseInt(r2.value)},
-    {min:21,max:30,count:parseInt(r3.value)},
-    {min:31,max:40,count:parseInt(r4.value)},
-    {min:41,max:45,count:parseInt(r5.value)}
-  ];
+    let numbers=[...selected];
 
-  let totalCount = ranges.reduce((sum,r)=>sum+r.count,0);
-  if(totalCount !== 6){
-    alert("구간 합계는 6이어야 합니다.");
-    return;
-  }
+    while(numbers.length<6){
 
-  let numbers = [...include];
+        let n=Math.floor(Math.random()*45)+1;
 
-  for(let r of ranges){
-    let pool = [];
-    for(let i=r.min;i<=r.max;i++){
-      if(!numbers.includes(i) && !exclude.includes(i)){
-        pool.push(i);
-      }
+        if(!numbers.includes(n))
+            numbers.push(n);
     }
-    while(pool.length && numbers.filter(n=>n>=r.min && n<=r.max).length < r.count){
-      let pick = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
-      numbers.push(pick);
+
+    /* 희귀 패턴 */
+    if(document.getElementById("rare").checked){
+
+        numbers=numbers.map(n=>{
+            if(Math.random()>0.5){
+                return n%2===0 ? (n+1<=45?n+1:n-1) : n;
+            }
+            return n;
+        });
     }
-  }
 
-  if(numbers.length !== 6){
-    alert("조건이 너무 제한적입니다.");
-    return;
-  }
+    numbers=[...new Set(numbers)];
 
-  numbers.sort((a,b)=>a-b);
-  result.innerHTML = "추천 번호 : " + numbers.join(", ");
+    numbers.sort((a,b)=>a-b);
+
+    document.getElementById("result").innerText=
+        "🎯 추천 번호 : "+numbers.join(", ");
+
+    /* 히스토리 저장 */
+    let history=JSON.parse(localStorage.getItem("lottoHistory")||"[]");
+
+    history.unshift({
+        time:new Date().toLocaleString(),
+        numbers:numbers
+    });
+
+    history=history.slice(0,50);
+
+    localStorage.setItem("lottoHistory",JSON.stringify(history));
 }
 
-function rareGenerate(){
-  let numbers = [];
-  while(numbers.length < 6){
-    let num = Math.floor(Math.random()*45)+1;
-    if(!numbers.includes(num)) numbers.push(num);
-  }
-
-  // 희귀 패턴: 모두 홀수 or 모두 짝수
-  if(Math.random() > 0.5){
-    numbers = numbers.map(n=> n%2===0 ? n+1<=45?n+1:n-1 : n);
-  } else {
-    numbers = numbers.map(n=> n%2!==0 ? n+1<=45?n+1:n-1 : n);
-  }
-
-  numbers = [...new Set(numbers)];
-  while(numbers.length<6){
-    let n=Math.floor(Math.random()*45)+1;
-    if(!numbers.includes(n)) numbers.push(n);
-  }
-
-  numbers.sort((a,b)=>a-b);
-  result.innerHTML = "🔥 희귀 조합 추천 : " + numbers.join(", ");
+/* PWA Service Worker */
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('service-worker.js');
 }
 
 </script>
