@@ -1,48 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <meta property="og:title" content="로또 번호 생성기 | 1등 당첨 기원 조합">
 <meta property="og:description" content="나만의 전략으로 번호를 조합하세요. 포함/제외 기능 제공.">
 <meta property="og:url" content="https://luckyty.co.kr">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://luckyty.co.kr/og-image.png">
-<title>📊 역대 당첨번호</title>
+
+<title>📊 역대 당첨번호 | Luckyty</title>
 
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8410908069473405"
-     crossorigin="anonymous"></script>
+crossorigin="anonymous"></script>
 
 <style>
 body{
-    font-family: Arial;
-    background:#f4f4f4;
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#f4f6f9;
+}
+
+/* ===== HEADER ===== */
+.header{
+    background:#1976d2;
+    color:white;
+    padding:16px;
     text-align:center;
-    margin:20px;
+    font-size:18px;
+    font-weight:bold;
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
 }
 
-h2{
-    margin-bottom:20px;
+/* ===== CONTAINER ===== */
+.container{
+    padding:15px;
+    max-width:800px;
+    margin:auto;
 }
 
+/* ===== CARD ===== */
 .round-box{
     background:white;
-    margin:10px auto;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.08);
-    max-width:600px;
+    margin-bottom:15px;
+    padding:18px;
+    border-radius:14px;
+    box-shadow:0 3px 12px rgba(0,0,0,0.08);
 }
 
+/* ===== BALL STYLE ===== */
 .ball{
     display:inline-flex;
     justify-content:center;
     align-items:center;
-    width:42px;
-    height:42px;
+    width:40px;
+    height:40px;
     border-radius:50%;
     margin:4px;
     font-weight:bold;
     color:white;
-    font-size:15px;
+    font-size:14px;
 }
 
 .yellow{ background:#fbc400; }
@@ -52,36 +70,86 @@ h2{
 .green{ background:#b0d840; }
 
 .bonus-label{
-    margin-left:10px;
+    display:block;
+    margin-top:10px;
+    font-size:13px;
     font-weight:bold;
+    color:#555;
+}
+
+/* ===== PAGINATION ===== */
+.pagination{
+    text-align:center;
+    margin:25px 0;
 }
 
 button{
     padding:10px 18px;
-    margin:15px 5px;
+    margin:0 8px;
     border:none;
-    border-radius:8px;
-    background:#4caf50;
+    border-radius:25px;
+    background:#1976d2;
     color:white;
+    font-size:14px;
     cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    background:#125ca1;
 }
 
 #pageInfo{
     font-weight:bold;
+    margin:0 10px;
+    font-size:15px;
+}
+
+/* ===== FOOTER ===== */
+.footer{
+    margin-top:40px;
+    padding:12px;
+    background:#1976d2;
+    color:white;
+    text-align:center;
+    font-size:13px;
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:600px){
+    .ball{
+        width:36px;
+        height:36px;
+        font-size:13px;
+    }
+    button{
+        padding:8px 14px;
+        font-size:13px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<h2>📊 역대 당첨번호</h2>
+<div class="header">
+📊 Luckyty 역대 당첨번호
+</div>
+
+<div class="container">
 
 <div id="lottoData"></div>
 
-<div>
+<div class="pagination">
 <button onclick="prevPage()">⬅ 이전</button>
 <span id="pageInfo"></span>
 <button onclick="nextPage()">다음 ➡</button>
+</div>
+
+</div>
+
+<div class="footer">
+© 2026 Luckyty | 통계 기반 로또 분석
 </div>
 
 <script>
@@ -90,7 +158,7 @@ let lottoData=[];
 let page=1;
 const pageSize=50;
 
-/* 색상 결정 함수 */
+/* 색상 결정 */
 function getColorClass(num){
     if(num<=9) return "yellow";
     if(num<=19) return "blue";
@@ -99,23 +167,16 @@ function getColorClass(num){
     return "green";
 }
 
-/* JSON 로드 */
 async function loadLotto(){
-    try{
-        const res=await fetch("./lotto_data.json");
-        lottoData=await res.json();
-        renderPage();
-    }catch(e){
-        console.error(e);
-    }
+    const res=await fetch("./lotto_data.json");
+    lottoData=await res.json();
+    renderPage();
 }
 
-/* 페이지 렌더링 */
 function renderPage(){
 
     let start=(page-1)*pageSize;
     let end=start+pageSize;
-
     let pageData=lottoData.slice(start,end);
 
     let html=pageData.map(item=>{
@@ -129,9 +190,11 @@ function renderPage(){
 
         return `
             <div class="round-box">
-                <b>${item.round}회</b><br><br>
+                <div style="font-weight:bold;margin-bottom:10px;">
+                    ${item.round}회
+                </div>
                 ${balls}
-                <span class="bonus-label">+ 보너스</span>
+                <div class="bonus-label">+ 보너스</div>
                 ${bonusBall}
             </div>
         `;
@@ -143,11 +206,11 @@ function renderPage(){
         `${page} / ${Math.ceil(lottoData.length/pageSize)}`;
 }
 
-/* 페이지 이동 */
 function nextPage(){
     if(page < Math.ceil(lottoData.length/pageSize)){
         page++;
         renderPage();
+        window.scrollTo({top:0,behavior:"smooth"});
     }
 }
 
@@ -155,6 +218,7 @@ function prevPage(){
     if(page>1){
         page--;
         renderPage();
+        window.scrollTo({top:0,behavior:"smooth"});
     }
 }
 
