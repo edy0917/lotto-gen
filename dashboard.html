@@ -10,44 +10,102 @@
 body{
   font-family:'Segoe UI',sans-serif;
   margin:0;
-  padding:20px;
-  background:#f0f2f5;
+  background:#f4f6f9;
 }
-h1{text-align:center;margin-bottom:40px;}
+
+/* ===== HEADER ===== */
+.header{
+  background:#1976d2;
+  color:white;
+  padding:16px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* ===== LAYOUT ===== */
+.container{
+  padding:15px;
+  max-width:1200px;
+  margin:auto;
+}
+
 .dashboard{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
-  gap:20px;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:15px;
 }
+
+/* ===== CARD ===== */
 .card{
   background:white;
-  padding:20px;
-  border-radius:15px;
-  box-shadow:0 4px 15px rgba(0,0,0,0.08);
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 3px 12px rgba(0,0,0,0.08);
 }
+
 .card h2{
   margin-top:0;
+  font-size:16px;
 }
+
+.rank-list{
+  padding-left:15px;
+}
+
 .rank-list li{
   margin:6px 0;
   font-weight:600;
 }
-.highlight{
-  color:#e74c3c;
-}
+
+.highlight{color:#e74c3c;}
 .hot{color:#e74c3c;font-weight:bold;}
 .cold{color:#3498db;font-weight:bold;}
+
+/* ===== CHART FIX ===== */
+.chart-wrapper{
+  position:relative;
+  height:300px;
+}
+
+/* ===== FOOTER ===== */
+.footer{
+  margin-top:40px;
+  padding:12px;
+  background:#1976d2;
+  color:white;
+  text-align:center;
+  font-size:13px;
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:600px){
+  .dashboard{
+    grid-template-columns:1fr;
+  }
+  .card h2{
+    font-size:14px;
+  }
+  .header{
+    font-size:16px;
+  }
+}
 </style>
 </head>
 <body>
 
-<h1>🎯 Luckyty 로또 분석 대시보드</h1>
+<div class="header">🎯 Luckyty 로또 분석 대시보드</div>
+
+<div class="container">
 
 <div class="dashboard">
 
 <div class="card">
 <h2>📊 전체 번호 출현 통계</h2>
+<div class="chart-wrapper">
 <canvas id="allChart"></canvas>
+</div>
 </div>
 
 <div class="card">
@@ -58,13 +116,15 @@ h1{text-align:center;margin-bottom:40px;}
 <div class="card">
 <h2>🔥 핫 번호 (최근100회)</h2>
 <div id="hotNumbers"></div>
-<h2>❄ 콜드 번호 (최근100회)</h2>
+<h2 style="margin-top:15px;">❄ 콜드 번호 (최근100회)</h2>
 <div id="coldNumbers"></div>
 </div>
 
 <div class="card">
 <h2>📉 최근100회 추세</h2>
+<div class="chart-wrapper">
 <canvas id="trendChart"></canvas>
+</div>
 </div>
 
 <div class="card">
@@ -74,7 +134,9 @@ h1{text-align:center;margin-bottom:40px;}
 
 <div class="card">
 <h2>📊 번호 구간 분포</h2>
+<div class="chart-wrapper">
 <canvas id="rangeDist"></canvas>
+</div>
 </div>
 
 <div class="card">
@@ -83,10 +145,16 @@ h1{text-align:center;margin-bottom:40px;}
 </div>
 
 </div>
+</div>
+
+<div class="footer">
+© 2026 Luckyty | 통계 기반 로또 분석
+</div>
 
 <script>
 
 let lottoData=[];
+const chartStore={};
 
 async function loadLotto(){
     const res=await fetch("./lotto_data.json");
@@ -117,8 +185,11 @@ function calculateBonusFrequency(data){
 }
 
 function sortDesc(obj){
-    return Object.entries(obj)
-        .sort((a,b)=>b[1]-a[1]);
+    return Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+}
+
+function destroyChart(id){
+    if(chartStore[id]) chartStore[id].destroy();
 }
 
 function render(){
@@ -136,31 +207,24 @@ function render(){
 }
 
 function renderBarChart(freq){
-    const ctx=document.getElementById("allChart").getContext("2d");
+    destroyChart("allChart");
 
-    const gradient=ctx.createLinearGradient(0,0,0,400);
-    gradient.addColorStop(0,"#ff7675");
-    gradient.addColorStop(1,"#74b9ff");
-
-    new Chart(ctx,{
+    chartStore["allChart"]=new Chart(document.getElementById("allChart"),{
         type:'bar',
         data:{
             labels:Object.keys(freq),
             datasets:[{
-                label:"출현 횟수",
                 data:Object.values(freq),
-                backgroundColor:gradient
+                backgroundColor:"#1976d2"
             }]
         },
-        options:{
-            responsive:true,
-            plugins:{legend:{display:false}}
-        }
+        options:{responsive:true,maintainAspectRatio:false}
     });
 }
 
 function renderTop10(sorted){
     const ul=document.getElementById("top10");
+    ul.innerHTML="";
     sorted.slice(0,10).forEach((item,i)=>{
         ul.innerHTML+=`<li class="${i<3?'highlight':''}">${i+1}위 - ${item[0]}번 (${item[1]}회)</li>`;
     });
@@ -179,26 +243,27 @@ function renderHotCold(){
 }
 
 function renderTrend(){
+    destroyChart("trendChart");
+
     const recent=lottoData.slice(-100);
     const freq=calculateFrequency(recent);
 
-    new Chart(document.getElementById("trendChart"),{
+    chartStore["trendChart"]=new Chart(document.getElementById("trendChart"),{
         type:'line',
         data:{
             labels:Object.keys(freq),
             datasets:[{
-                label:"최근100회 출현",
                 data:Object.values(freq),
                 borderColor:"#6c5ce7",
                 tension:0.3
             }]
-        }
+        },
+        options:{responsive:true,maintainAspectRatio:false}
     });
 }
 
 function renderOverdue(){
     let lastSeen=initCount();
-
     lottoData.forEach((draw,i)=>{
         draw.numbers.forEach(n=>{
             lastSeen[n]=i;
@@ -211,20 +276,17 @@ function renderOverdue(){
         .map(([num,idx])=>[num,totalIndex-idx])
         .sort((a,b)=>b[1]-a[1]);
 
+    const ul=document.getElementById("overdue");
+    ul.innerHTML="";
     overdue.slice(0,5).forEach(item=>{
-        document.getElementById("overdue").innerHTML+=
-        `<li>${item[0]}번 - ${item[1]}회 미출현</li>`;
+        ul.innerHTML+=`<li>${item[0]}번 - ${item[1]}회 미출현</li>`;
     });
 }
 
 function renderRangeDist(freq){
-    let ranges={
-        "1~10":0,
-        "11~20":0,
-        "21~30":0,
-        "31~40":0,
-        "41~45":0
-    };
+    destroyChart("rangeDist");
+
+    let ranges={"1~10":0,"11~20":0,"21~30":0,"31~40":0,"41~45":0};
 
     for(let num in freq){
         let n=parseInt(num);
@@ -235,14 +297,11 @@ function renderRangeDist(freq){
         else ranges["41~45"]+=freq[num];
     }
 
-    new Chart(document.getElementById("rangeDist"),{
+    chartStore["rangeDist"]=new Chart(document.getElementById("rangeDist"),{
         type:'doughnut',
-        data:{
-            labels:Object.keys(ranges),
-            datasets:[{
-                data:Object.values(ranges)
-            }]
-        }
+        data:{labels:Object.keys(ranges),
+              datasets:[{data:Object.values(ranges)}]},
+        options:{responsive:true,maintainAspectRatio:false}
     });
 }
 
@@ -250,15 +309,15 @@ function renderBonus(){
     const freq=calculateBonusFrequency(lottoData);
     const sorted=sortDesc(freq);
 
+    const ul=document.getElementById("bonusTop");
+    ul.innerHTML="";
     sorted.slice(0,5).forEach((item,i)=>{
-        document.getElementById("bonusTop").innerHTML+=
-        `<li>${i+1}위 - ${item[0]}번 (${item[1]}회)</li>`;
+        ul.innerHTML+=`<li>${i+1}위 - ${item[0]}번 (${item[1]}회)</li>`;
     });
 }
 
 loadLotto();
 
 </script>
-
 </body>
 </html>
