@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또 통계 대시보드 | Luckyty</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #f4f6f9;
+}
+h1 { text-align: center; }
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 30px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+select { padding: 5px; }
+canvas { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h1>📊 로또 통계 대시보드</h1>
+
+<div class="card">
+  <h2>전체 회차 기준 가장 많이 나온 번호</h2>
+  <canvas id="allTimeChart"></canvas>
+</div>
+
+<div class="card">
+  <h2>50회 단위 번호 통계</h2>
+  <label>구간 선택:</label>
+  <select id="rangeSelect"></select>
+  <canvas id="rangeChart"></canvas>
+</div>
+
+<div class="card">
+  <h2>보너스 번호(2등용) 많이 나온 순위</h2>
+  <canvas id="bonusChart"></canvas>
+</div>
+
+<script>
+
+let lottoData = [];
+let allTimeChartInstance = null;
+let rangeChartInstance = null;
+let bonusChartInstance = null;
+
+async function loadLotto(){
+    try{
+        const res = await fetch("./lotto_data.json");
+        lottoData = await res.json();
+        renderPage();
+    }catch(e){
+        console.error("로또 데이터 로드 실패:", e);
+    }
+}
+
+function initCount() {
+    let count = {};
+    for (let i = 1; i <= 45; i++) count[i] = 0;
+    return count;
+}
+
+function calculateFrequency(data) {
+    let count = initCount();
+    data.forEach(draw => {
+        draw.numbers.forEach(n => count[n]++);
+    });
+    return count;
+}
+
+function calculateBonusFrequency(data) {
+    let count = initCount();
+    data.forEach(draw => {
+        count[draw.bonus]++;
+    });
+    return count;
+}
+
+function createChart(canvasId, freqData, label, existingChart) {
+
+    if (existingChart) existingChart.destroy();
+
+    const labels = Object.keys(freqData);
+    const values = Object.values(freqData);
+
+    return new Chart(document.getElementById(canvasId), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: label,
+                data: values
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            }
+        }
+    });
+}
+
+function setupRangeSelector() {
+
+    const rangeSelect = document.getElementById("rangeSelect");
+    rangeSelect.innerHTML = "";
+
+    for (let i = 0; i < lottoData.length; i += 50) {
+        let end = Math.min(i + 50, lottoData.length);
+        let option = document.createElement("option");
+        option.value = i;
+        option.text = `${i+1}회 ~ ${end}회`;
+        rangeSelect.appendChild(option);
+    }
+
+    rangeSelect.addEventListener("change", function() {
+        const start = parseInt(this.value);
+        const rangeData = lottoData.slice(start, start + 50);
+        const rangeFreq = calculateFrequency(rangeData);
+
+        rangeChartInstance = createChart(
+            "rangeChart",
+            rangeFreq,
+            "선택 구간 번호 출현 횟수",
+            rangeChartInstance
+        );
+    });
+
+    // 기본 첫 구간 표시
+    if (lottoData.length > 0) {
+        const defaultRange = lottoData.slice(0, 50);
+        const defaultFreq = calculateFrequency(defaultRange);
+        rangeChartInstance = createChart(
+            "rangeChart",
+            defaultFreq,
+            "선택 구간 번호 출현 횟수",
+            rangeChartInstance
+        );
+    }
+}
+
+function renderPage(){
+
+    const allTimeFreq = calculateFrequency(lottoData);
+    allTimeChartInstance = createChart(
+        "allTimeChart",
+        allTimeFreq,
+        "전체 번호 출현 횟수",
+        allTimeChartInstance
+    );
+
+    const bonusFreq = calculateBonusFrequency(lottoData);
+    bonusChartInstance = createChart(
+        "bonusChart",
+        bonusFreq,
+        "보너스 번호 출현 횟수",
+        bonusChartInstance
+    );
+
+    setupRangeSelector();
+}
+
+loadLotto();
+
+</script>
+
+</body>
+</html>
