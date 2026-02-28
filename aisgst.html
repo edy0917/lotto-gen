@@ -3,52 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <title>🤖 AI 로또 추천기</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{font-family:sans-serif;text-align:center;background:#f5f5f5}
-button{padding:10px 20px;margin:5px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer}
-select{padding:8px;border-radius:8px}
+
+body{
+    font-family:sans-serif;
+    text-align:center;
+    background:#f5f5f5;
+    margin:0;
+    padding-bottom:80px;
+}
+
+/* HEADER */
+.header{
+    background:#1976d2;
+    color:white;
+    padding:16px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* 컨트롤 */
+select{
+    padding:10px;
+    border-radius:8px;
+    font-size:16px;
+    width:90%;
+    max-width:300px;
+    margin-top:15px;
+}
+
+/* 버튼 */
+button{
+    padding:12px 20px;
+    margin:10px;
+    border:none;
+    border-radius:10px;
+    background:#4CAF50;
+    color:#fff;
+    cursor:pointer;
+    font-size:16px;
+}
+
+/* 번호 영역 ⭐ 핵심 */
+#result{
+    display:flex;
+    flex-direction:column;   /* 줄 단위 배치 */
+    gap:15px;
+    margin-top:25px;
+    align-items:center;
+}
+
+/* 한 줄 번호 */
+.row{
+    display:flex;
+    flex-wrap:nowrap;
+    gap:8px;
+    overflow-x:auto;
+    padding:5px;
+}
+
+/* 번호 공 */
 .ball{
-    display:inline-flex;
-    width:45px;height:45px;
+    flex:0 0 auto;
+    width:45px;
+    height:45px;
     border-radius:50%;
+    display:flex;
     justify-content:center;
     align-items:center;
     font-weight:bold;
-    color:#fff;
-    margin:5px;
+    color:white;
     font-size:18px;
 }
+
+/* 이유 영역 */
 .reason{
-    margin-top:15px;
-    padding:10px;
-    background:#fff;
-    border-radius:10px;
-    width:80%;
+    margin-top:20px;
+    padding:15px;
+    background:white;
+    border-radius:12px;
+    width:90%;
+    max-width:600px;
     margin-left:auto;
     margin-right:auto;
+    font-size:15px;
 }
-/* ===== FOOTER ===== */
-.footer{
-  position: fixed;
-  width: 100%;
-  bottom: 0;
-  margin-top:40px;
-  padding:12px;
-  background:#1976d2;
-  color:white;
-  text-align:center;
-  font-size:13px;
-}
-/* ===== HEADER ===== */
-.header{
-  background:#1976d2;
-  color:white;
-  padding:16px;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-  box-shadow:0 2px 8px rgba(0,0,0,0.2);
-}
+
 /* 하단 네비 */
 .bottom-nav{
     position:fixed;
@@ -73,11 +116,13 @@ select{padding:8px;border-radius:8px}
     color:#6200ea;
     font-weight:500;
 }
+
 </style>
 </head>
-<body>
-<div class="header">🤖 AI 가중치 로또 추천</div>
 
+<body>
+
+<div class="header">🤖 AI 가중치 로또 추천</div>
 
 <select id="mode">
 <option value="random">🎲 기본 랜덤</option>
@@ -86,12 +131,24 @@ select{padding:8px;border-radius:8px}
 <option value="ai">🤖 AI 가중치 추천</option>
 </select>
 
-<br><br>
+<br>
+
+<select id="lineCount">
+<option value="1">1줄 생성</option>
+<option value="2">2줄 생성</option>
+<option value="3">3줄 생성</option>
+<option value="4">4줄 생성</option>
+<option value="5">5줄 생성</option>
+</select>
+
+<br>
+
 <button onclick="generate()">번호 생성</button>
 
 <div id="result"></div>
 <div id="reason" class="reason"></div>
-    
+
+<!-- FOOTER = bottom nav -->
 <div class="bottom-nav">
     <a href="index.html">🏠 생성</a>
     <a href="winning.html">🏆 당첨</a>
@@ -99,6 +156,7 @@ select{padding:8px;border-radius:8px}
     <a href="aisgst.html" class="active">🤖 AI</a>
     <a href="dashboard.html">📈 대시보드</a>
 </div>
+
 <script>
 
 let lottoData=[];
@@ -124,7 +182,7 @@ function calculateFrequency(lastN=100){
 
     data.forEach(draw=>{
         draw.numbers.forEach(n=>freq[n]++);
-        freq[draw.bonus]+=0.5; // 보너스 약한 가중치
+        freq[draw.bonus]+=0.5;
     });
 
     return freq;
@@ -149,50 +207,10 @@ function generate(){
     }
 
     let mode=document.getElementById("mode").value;
+    let lineCount=parseInt(document.getElementById("lineCount").value);
     let freq=calculateFrequency(100);
-    let selected=[];
-    let reasonText="";
 
-    while(selected.length<6){
-
-        let num;
-
-        if(mode==="random"){
-            num=Math.floor(Math.random()*45)+1;
-        }
-
-        else if(mode==="hot"){
-            num=weightedPick(freq);
-        }
-
-        else if(mode==="cold"){
-            let inverted=freq.map(f=>Math.max(...freq)-f+1);
-            num=weightedPick(inverted);
-        }
-
-        else if(mode==="ai"){
-            let aiWeights=freq.map((f,i)=>{
-                let trend=Math.random()*2;
-                return f*1.2 + trend;
-            });
-            num=weightedPick(aiWeights);
-        }
-
-        if(!selected.includes(num)){
-            selected.push(num);
-        }
-    }
-
-    selected.sort((a,b)=>a-b);
-
-    document.getElementById("result").innerHTML=
-        selected.map(n=>`<div class="ball" style="background:${getColor(n)}">${n}</div>`).join("");
-
-    // 추천 이유 생성
-    let hotNum=selected.filter(n=>freq[n]>10);
-    let coldNum=selected.filter(n=>freq[n]<5);
-
-    reasonText="📊 추천 이유:<br>";
+    let reasonText="📊 추천 이유:<br>";
 
     if(mode==="random"){
         reasonText+="완전 무작위 균형 조합입니다.";
@@ -207,14 +225,51 @@ function generate(){
         reasonText+="최근 통계 + 랜덤 트렌드 가중치를 혼합한 AI 분석 조합입니다.";
     }
 
-    if(hotNum.length>0){
-        reasonText+=`<br>🔥 강세 번호 포함: ${hotNum.join(", ")}`;
+    let resultHTML="";
+
+    for(let line=0; line<lineCount; line++){
+
+        let selected=[];
+
+        while(selected.length<6){
+
+            let num;
+
+            if(mode==="random"){
+                num=Math.floor(Math.random()*45)+1;
+            }
+            else if(mode==="hot"){
+                num=weightedPick(freq);
+            }
+            else if(mode==="cold"){
+                let maxFreq=Math.max(...freq);
+                let inverted=freq.map(f=>maxFreq-f+1);
+                num=weightedPick(inverted);
+            }
+            else if(mode==="ai"){
+                let aiWeights=freq.map(f=>{
+                    let trend=Math.random()*2;
+                    return f*1.2 + trend;
+                });
+                num=weightedPick(aiWeights);
+            }
+
+            if(!selected.includes(num)){
+                selected.push(num);
+            }
+        }
+
+        selected.sort((a,b)=>a-b);
+
+        resultHTML+=
+        `<div class="row">
+            ${selected.map(n=>
+                `<div class="ball" style="background:${getColor(n)}">${n}</div>`
+            ).join("")}
+        </div>`;
     }
 
-    if(coldNum.length>0){
-        reasonText+=`<br>❄ 저출현 번호 포함: ${coldNum.join(", ")}`;
-    }
-
+    document.getElementById("result").innerHTML=resultHTML;
     document.getElementById("reason").innerHTML=reasonText;
 }
 
