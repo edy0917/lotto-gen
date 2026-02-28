@@ -17,10 +17,41 @@
 <link rel="manifest" href="manifest.json">
 
 <style>
+
 body{
     font-family: Arial;
     background:#f4f4f4;
     text-align:center;
+    margin:0;
+}
+
+/* 🔥 상단 네비게이션 */
+.navbar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    background:#222;
+    padding:12px 0;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    z-index:999;
+}
+
+.navbar a{
+    color:white;
+    text-decoration:none;
+    margin:0 12px;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.navbar a:hover{
+    color:#4caf50;
+}
+
+/* 본문 밀기 */
+.wrapper{
+    padding-top:70px;
 }
 
 .card{
@@ -59,7 +90,6 @@ body{
     margin-top:20px;
 }
 
-/* 🎯 로또 공 스타일 */
 .ball{
     display:inline-flex;
     justify-content:center;
@@ -75,7 +105,6 @@ body{
                 inset 4px 4px 8px rgba(255,255,255,0.4);
 }
 
-/* 번호대별 색상 */
 .yellow{ background:#fbc400; }
 .blue{ background:#69c8f2; }
 .red{ background:#ff7272; }
@@ -94,6 +123,16 @@ body{
 </head>
 
 <body>
+
+<!-- 🔥 상단 네비게이션 -->
+<div class="navbar">
+    <a href="history.html">📜 생성번호</a>
+    <a href="winning.html">🏆 당첨번호</a>
+    <a href="statistics.html">📊 통계</a>
+    <a href="dashboard.html">📈 대시보드</a>
+</div>
+
+<div class="wrapper">
 
 <div class="card">
 
@@ -122,11 +161,7 @@ body{
 
 <br><br>
 
-<button class="btn" onclick="generate()">번호 생성 (6개)</button><br>
-<button class="btn" onclick="location.href='history.html'">📜 생성번호 화면 보기</button><br>
-<button class="btn" onclick="location.href='winning.html'">📜 당첨번호 화면 보기</button><br>
-<button class="btn" onclick="location.href='statistics.html'">📜 역대당첨번호 통계 화면 보기</button><br>
-<button class="btn" onclick="location.href='dashboard.html'">📜 대시보드 보기</button>
+<button class="btn" onclick="generate()">번호 생성 (6개)</button>
 
 <div id="result" class="result"></div>
 </div>
@@ -139,8 +174,9 @@ body{
 사용자의 선택을 돕기 위한 서비스입니다.
 </div>
 
-<script>
+</div>
 
+<script>
 function getColorClass(num){
     if(num<=9) return "yellow";
     if(num<=19) return "blue";
@@ -158,7 +194,6 @@ function parseInput(id){
 }
 
 function generate(){
-
     let include=parseInput("includeNums");
     let exclude=parseInput("excludeNums");
     let lineCount=parseInt(document.getElementById("lineCount").value)||1;
@@ -196,31 +231,24 @@ function generate(){
     let outputHTML="";
 
     for(let line=0; line<lineCount; line++){
-
         let result=new Set(include);
         let attempt=0;
 
         while(result.size < 6 && attempt < 5000){
-
             let temp=new Set(result);
-
             while(temp.size < 6){
                 let idx=Math.floor(Math.random()*pool.length);
                 temp.add(pool[idx]);
             }
-
             let arr=[...temp];
-
             if(validate(arr)){
                 result=temp;
                 break;
             }
-
             attempt++;
         }
 
         let numbers=[...result].slice(0,6).sort((a,b)=>a-b);
-
         let ballsHTML=numbers.map(n=>
             `<span class="ball ${getColorClass(n)}">${n}</span>`
         ).join("");
@@ -230,7 +258,6 @@ function generate(){
 
     document.getElementById("result").innerHTML=outputHTML;
 }
-
 </script>
 </body>
 </html>
