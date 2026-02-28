@@ -3,100 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로또 통계 대시보드</title>
+<title>로또 통계 대시보드 | Luckyty</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
 <style>
-body{
-    margin:0;
-    font-family:'Roboto', sans-serif;
-    background:#f1f3f4;
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #f4f6f9;
 }
-
-/* 상단 앱바 */
-.appbar{
-    position:fixed;
-    top:0;
-    width:100%;
-    height:56px;
-    background:#6200ea;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:18px;
-    font-weight:500;
-    box-shadow:0 2px 6px rgba(0,0,0,0.3);
-    z-index:1000;
+h1 { text-align: center; }
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 30px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
-
-/* 콘텐츠 영역 */
-.content{
-    padding:80px 16px 100px;
-    max-width:900px;
-    margin:auto;
-}
-
-/* 카드 */
-.card{
-    background:white;
-    padding:18px;
-    margin-bottom:20px;
-    border-radius:16px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.08);
-}
-
-.card h2{
-    margin-top:0;
-    font-size:18px;
-}
-
-select{
-    padding:8px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    margin-top:8px;
-}
-
-/* 차트 반응형 */
-canvas{
-    margin-top:15px;
-}
-
-/* 하단 네비 */
-.bottom-nav{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    height:65px;
-    background:white;
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-}
-
-.bottom-nav a{
-    text-decoration:none;
-    color:#555;
-    font-size:12px;
-    text-align:center;
-}
-
-.bottom-nav a.active{
-    color:#6200ea;
-    font-weight:500;
-}
+select { padding: 5px; margin-left: 10px; }
+canvas { margin-top: 20px; }
 </style>
 </head>
-
 <body>
 
-<div class="appbar">📊 로또 통계 대시보드</div>
-
-<div class="content">
+<h1>📊 로또 통계 대시보드</h1>
 
 <div class="card">
   <h2>전체 회차 기준 번호 출현 횟수</h2>
@@ -105,7 +35,7 @@ canvas{
 
 <div class="card">
   <h2>50회 단위 번호 통계</h2>
-  <label>구간 선택</label><br>
+  <label>구간 선택:</label>
   <select id="rangeSelect"></select>
   <canvas id="rangeChart"></canvas>
 </div>
@@ -117,19 +47,9 @@ canvas{
 
 <div class="card">
   <h2>50회 단위 보너스 번호 통계</h2>
-  <label>구간 선택</label><br>
+  <label>구간 선택:</label>
   <select id="bonusRangeSelect"></select>
   <canvas id="bonusRangeChart"></canvas>
-</div>
-
-</div>
-
-<!-- 하단 네비 -->
-<div class="bottom-nav">
-    <a href="index.html">🏠 생성</a>
-    <a href="winning.html">🏆 당첨</a>
-    <a href="statistics.html">📊 통계</a>
-    <a href="dashboard.html" class="active">📈 대시보드</a>
 </div>
 
 <script>
@@ -177,18 +97,20 @@ function createChart(canvasId, freqData, label, existingChart) {
 
     if (existingChart) existingChart.destroy();
 
+    const labels = Object.keys(freqData);
+    const values = Object.values(freqData);
+
     return new Chart(document.getElementById(canvasId), {
         type: 'bar',
         data: {
-            labels: Object.keys(freqData),
+            labels: labels,
             datasets: [{
                 label: label,
-                data: Object.values(freqData)
+                data: values
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
             plugins: {
                 legend: { display: true }
             }
@@ -219,30 +141,35 @@ function setupRangeSelectors() {
         bonusRangeSelect.appendChild(option2);
     }
 
+    // 번호 구간 변경
     rangeSelect.addEventListener("change", function() {
         const start = parseInt(this.value);
         const rangeData = lottoData.slice(start, start + 50);
+        const rangeFreq = calculateFrequency(rangeData);
 
         rangeChartInstance = createChart(
             "rangeChart",
-            calculateFrequency(rangeData),
+            rangeFreq,
             "선택 구간 번호 출현 횟수",
             rangeChartInstance
         );
     });
 
+    // 보너스 구간 변경
     bonusRangeSelect.addEventListener("change", function() {
         const start = parseInt(this.value);
         const rangeData = lottoData.slice(start, start + 50);
+        const bonusFreq = calculateBonusFrequency(rangeData);
 
         bonusRangeChartInstance = createChart(
             "bonusRangeChart",
-            calculateBonusFrequency(rangeData),
+            bonusFreq,
             "선택 구간 보너스 번호 출현 횟수",
             bonusRangeChartInstance
         );
     });
 
+    // 기본 구간 표시
     if (lottoData.length > 0) {
         const defaultRange = lottoData.slice(0, 50);
 
