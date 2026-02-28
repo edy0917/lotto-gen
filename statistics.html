@@ -61,16 +61,30 @@ select {
   margin-top: 15px;
 }
 
-/* ===== FOOTER ===== */
-.footer {
-  background: #1976d2;
-  color: white;
-  text-align: center;
-  padding: 10px;
-  font-size: 13px;
-  margin-top: 40px;
+/* 하단 네비 */
+.bottom-nav{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    height:65px;
+    background:white;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.1);
 }
 
+.bottom-nav a{
+    text-decoration:none;
+    color:#555;
+    font-size:12px;
+    text-align:center;
+}
+
+.bottom-nav a.active{
+    color:#6200ea;
+    font-weight:500;
+}
 /* ===== MOBILE ===== */
 @media (max-width: 600px) {
   .header {
@@ -122,8 +136,11 @@ select {
 
 </div>
 
-<div class="footer">
-  © 2026 Luckyty | 로또 통계 기반 분석 서비스
+<div class="bottom-nav">
+    <a href="index.html" class="active">🏠 생성</a>
+    <a href="winning.html">🏆 당첨</a>
+    <a href="statistics.html">📊 통계</a>
+    <a href="dashboard.html">📈 대시보드</a>
 </div>
 
 <script>
