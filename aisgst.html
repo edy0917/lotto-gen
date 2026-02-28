@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>🤖 AI 로또 추천기</title>
+<style>
+body{font-family:sans-serif;text-align:center;background:#f5f5f5}
+button{padding:10px 20px;margin:5px;border:none;border-radius:8px;background:#4CAF50;color:#fff;cursor:pointer}
+select{padding:8px;border-radius:8px}
+.ball{
+    display:inline-flex;
+    width:45px;height:45px;
+    border-radius:50%;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    color:#fff;
+    margin:5px;
+    font-size:18px;
+}
+.reason{
+    margin-top:15px;
+    padding:10px;
+    background:#fff;
+    border-radius:10px;
+    width:80%;
+    margin-left:auto;
+    margin-right:auto;
+}
+</style>
+</head>
+<body>
+
+<h2>🤖 AI 가중치 로또 추천</h2>
+
+<select id="mode">
+<option value="random">🎲 기본 랜덤</option>
+<option value="hot">🔥 핫 번호 강화</option>
+<option value="cold">❄ 콜드 번호 노림</option>
+<option value="ai">🤖 AI 가중치 추천</option>
+</select>
+
+<br><br>
+<button onclick="generate()">번호 생성</button>
+
+<div id="result"></div>
+<div id="reason" class="reason"></div>
+
+<script>
+
+let lottoData=[];
+
+async function loadLotto(){
+    const res=await fetch("./lotto_data.json");
+    lottoData=await res.json();
+}
+loadLotto();
+
+function getColor(num){
+    if(num<=10) return "#fbc400";
+    if(num<=20) return "#69c8f2";
+    if(num<=30) return "#ff7272";
+    if(num<=40) return "#aaa";
+    return "#b0d840";
+}
+
+function calculateFrequency(lastN=100){
+    let freq=Array(46).fill(0);
+
+    let data=lottoData.slice(-lastN);
+
+    data.forEach(draw=>{
+        draw.numbers.forEach(n=>freq[n]++);
+        freq[draw.bonus]+=0.5; // 보너스 약한 가중치
+    });
+
+    return freq;
+}
+
+function weightedPick(weights){
+    let pool=[];
+    for(let i=1;i<=45;i++){
+        let w=Math.max(1,Math.floor(weights[i]));
+        for(let j=0;j<w;j++){
+            pool.push(i);
+        }
+    }
+    return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function generate(){
+
+    if(lottoData.length===0){
+        alert("데이터 로딩 중...");
+        return;
+    }
+
+    let mode=document.getElementById("mode").value;
+    let freq=calculateFrequency(100);
+    let selected=[];
+    let reasonText="";
+
+    while(selected.length<6){
+
+        let num;
+
+        if(mode==="random"){
+            num=Math.floor(Math.random()*45)+1;
+        }
+
+        else if(mode==="hot"){
+            num=weightedPick(freq);
+        }
+
+        else if(mode==="cold"){
+            let inverted=freq.map(f=>Math.max(...freq)-f+1);
+            num=weightedPick(inverted);
+        }
+
+        else if(mode==="ai"){
+            let aiWeights=freq.map((f,i)=>{
+                let trend=Math.random()*2;
+                return f*1.2 + trend;
+            });
+            num=weightedPick(aiWeights);
+        }
+
+        if(!selected.includes(num)){
+            selected.push(num);
+        }
+    }
+
+    selected.sort((a,b)=>a-b);
+
+    document.getElementById("result").innerHTML=
+        selected.map(n=>`<div class="ball" style="background:${getColor(n)}">${n}</div>`).join("");
+
+    // 추천 이유 생성
+    let hotNum=selected.filter(n=>freq[n]>10);
+    let coldNum=selected.filter(n=>freq[n]<5);
+
+    reasonText="📊 추천 이유:<br>";
+
+    if(mode==="random"){
+        reasonText+="완전 무작위 균형 조합입니다.";
+    }
+    if(mode==="hot"){
+        reasonText+="최근 100회에서 자주 등장한 번호를 강화했습니다.";
+    }
+    if(mode==="cold"){
+        reasonText+="최근 출현이 적은 번호 위주로 구성했습니다.";
+    }
+    if(mode==="ai"){
+        reasonText+="최근 통계 + 랜덤 트렌드 가중치를 혼합한 AI 분석 조합입니다.";
+    }
+
+    if(hotNum.length>0){
+        reasonText+=`<br>🔥 강세 번호 포함: ${hotNum.join(", ")}`;
+    }
+
+    if(coldNum.length>0){
+        reasonText+=`<br>❄ 저출현 번호 포함: ${coldNum.join(", ")}`;
+    }
+
+    document.getElementById("reason").innerHTML=reasonText;
+}
+
+</script>
+
+</body>
+</html>
