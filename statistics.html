@@ -3,170 +3,257 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로또 통계 대시보드 | Luckyty</title>
+<title>Luckyty 로또 분석 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  background: #f4f6f9;
+body{
+  font-family:'Segoe UI',sans-serif;
+  margin:0;
+  padding:20px;
+  background:#f0f2f5;
 }
-h1 { text-align: center; }
-.card {
-  background: white;
-  padding: 20px;
-  margin-bottom: 30px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+h1{text-align:center;margin-bottom:40px;}
+.dashboard{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+  gap:20px;
 }
-select { padding: 5px; }
-canvas { margin-top: 20px; }
+.card{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+.card h2{
+  margin-top:0;
+}
+.rank-list li{
+  margin:6px 0;
+  font-weight:600;
+}
+.highlight{
+  color:#e74c3c;
+}
+.hot{color:#e74c3c;font-weight:bold;}
+.cold{color:#3498db;font-weight:bold;}
 </style>
 </head>
 <body>
 
-<h1>📊 로또 통계 대시보드</h1>
+<h1>🎯 Luckyty 로또 분석 대시보드</h1>
+
+<div class="dashboard">
 
 <div class="card">
-  <h2>전체 회차 기준 가장 많이 나온 번호</h2>
-  <canvas id="allTimeChart"></canvas>
+<h2>📊 전체 번호 출현 통계</h2>
+<canvas id="allChart"></canvas>
 </div>
 
 <div class="card">
-  <h2>50회 단위 번호 통계</h2>
-  <label>구간 선택:</label>
-  <select id="rangeSelect"></select>
-  <canvas id="rangeChart"></canvas>
+<h2>🏆 TOP10 번호</h2>
+<ul id="top10" class="rank-list"></ul>
 </div>
 
 <div class="card">
-  <h2>보너스 번호(2등용) 많이 나온 순위</h2>
-  <canvas id="bonusChart"></canvas>
+<h2>🔥 핫 번호 (최근100회)</h2>
+<div id="hotNumbers"></div>
+<h2>❄ 콜드 번호 (최근100회)</h2>
+<div id="coldNumbers"></div>
+</div>
+
+<div class="card">
+<h2>📉 최근100회 추세</h2>
+<canvas id="trendChart"></canvas>
+</div>
+
+<div class="card">
+<h2>⏳ 가장 오래 안 나온 번호</h2>
+<ul id="overdue" class="rank-list"></ul>
+</div>
+
+<div class="card">
+<h2>📊 번호 구간 분포</h2>
+<canvas id="rangeDist"></canvas>
+</div>
+
+<div class="card">
+<h2>🎁 보너스 번호 TOP5</h2>
+<ul id="bonusTop" class="rank-list"></ul>
+</div>
+
 </div>
 
 <script>
 
-let lottoData = [];
-let allTimeChartInstance = null;
-let rangeChartInstance = null;
-let bonusChartInstance = null;
+let lottoData=[];
 
 async function loadLotto(){
-    try{
-        const res = await fetch("./lotto_data.json");
-        lottoData = await res.json();
-        renderPage();
-    }catch(e){
-        console.error("로또 데이터 로드 실패:", e);
-    }
+    const res=await fetch("./lotto_data.json");
+    lottoData=await res.json();
+    render();
 }
 
-function initCount() {
-    let count = {};
-    for (let i = 1; i <= 45; i++) count[i] = 0;
-    return count;
+function initCount(){
+    let obj={};
+    for(let i=1;i<=45;i++) obj[i]=0;
+    return obj;
 }
 
-function calculateFrequency(data) {
-    let count = initCount();
-    data.forEach(draw => {
-        draw.numbers.forEach(n => count[n]++);
+function calculateFrequency(data){
+    let count=initCount();
+    data.forEach(d=>{
+        d.numbers.forEach(n=>count[n]++);
     });
     return count;
 }
 
-function calculateBonusFrequency(data) {
-    let count = initCount();
-    data.forEach(draw => {
-        count[draw.bonus]++;
+function calculateBonusFrequency(data){
+    let count=initCount();
+    data.forEach(d=>{
+        count[d.bonus]++;
     });
     return count;
 }
 
-function createChart(canvasId, freqData, label, existingChart) {
+function sortDesc(obj){
+    return Object.entries(obj)
+        .sort((a,b)=>b[1]-a[1]);
+}
 
-    if (existingChart) existingChart.destroy();
+function render(){
 
-    const labels = Object.keys(freqData);
-    const values = Object.values(freqData);
+    const totalFreq=calculateFrequency(lottoData);
+    const sorted=sortDesc(totalFreq);
 
-    return new Chart(document.getElementById(canvasId), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: label,
-                data: values
+    renderBarChart(totalFreq);
+    renderTop10(sorted);
+    renderHotCold();
+    renderTrend();
+    renderOverdue();
+    renderRangeDist(totalFreq);
+    renderBonus();
+}
+
+function renderBarChart(freq){
+    const ctx=document.getElementById("allChart").getContext("2d");
+
+    const gradient=ctx.createLinearGradient(0,0,0,400);
+    gradient.addColorStop(0,"#ff7675");
+    gradient.addColorStop(1,"#74b9ff");
+
+    new Chart(ctx,{
+        type:'bar',
+        data:{
+            labels:Object.keys(freq),
+            datasets:[{
+                label:"출현 횟수",
+                data:Object.values(freq),
+                backgroundColor:gradient
             }]
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: true }
-            }
+        options:{
+            responsive:true,
+            plugins:{legend:{display:false}}
         }
     });
 }
 
-function setupRangeSelector() {
-
-    const rangeSelect = document.getElementById("rangeSelect");
-    rangeSelect.innerHTML = "";
-
-    for (let i = 0; i < lottoData.length; i += 50) {
-        let end = Math.min(i + 50, lottoData.length);
-        let option = document.createElement("option");
-        option.value = i;
-        option.text = `${i+1}회 ~ ${end}회`;
-        rangeSelect.appendChild(option);
-    }
-
-    rangeSelect.addEventListener("change", function() {
-        const start = parseInt(this.value);
-        const rangeData = lottoData.slice(start, start + 50);
-        const rangeFreq = calculateFrequency(rangeData);
-
-        rangeChartInstance = createChart(
-            "rangeChart",
-            rangeFreq,
-            "선택 구간 번호 출현 횟수",
-            rangeChartInstance
-        );
+function renderTop10(sorted){
+    const ul=document.getElementById("top10");
+    sorted.slice(0,10).forEach((item,i)=>{
+        ul.innerHTML+=`<li class="${i<3?'highlight':''}">${i+1}위 - ${item[0]}번 (${item[1]}회)</li>`;
     });
-
-    // 기본 첫 구간 표시
-    if (lottoData.length > 0) {
-        const defaultRange = lottoData.slice(0, 50);
-        const defaultFreq = calculateFrequency(defaultRange);
-        rangeChartInstance = createChart(
-            "rangeChart",
-            defaultFreq,
-            "선택 구간 번호 출현 횟수",
-            rangeChartInstance
-        );
-    }
 }
 
-function renderPage(){
+function renderHotCold(){
+    const recent=lottoData.slice(-100);
+    const freq=calculateFrequency(recent);
+    const sorted=sortDesc(freq);
 
-    const allTimeFreq = calculateFrequency(lottoData);
-    allTimeChartInstance = createChart(
-        "allTimeChart",
-        allTimeFreq,
-        "전체 번호 출현 횟수",
-        allTimeChartInstance
-    );
+    document.getElementById("hotNumbers").innerHTML=
+        sorted.slice(0,5).map(x=>`<span class="hot">${x[0]} </span>`).join("");
 
-    const bonusFreq = calculateBonusFrequency(lottoData);
-    bonusChartInstance = createChart(
-        "bonusChart",
-        bonusFreq,
-        "보너스 번호 출현 횟수",
-        bonusChartInstance
-    );
+    document.getElementById("coldNumbers").innerHTML=
+        sorted.slice(-5).map(x=>`<span class="cold">${x[0]} </span>`).join("");
+}
 
-    setupRangeSelector();
+function renderTrend(){
+    const recent=lottoData.slice(-100);
+    const freq=calculateFrequency(recent);
+
+    new Chart(document.getElementById("trendChart"),{
+        type:'line',
+        data:{
+            labels:Object.keys(freq),
+            datasets:[{
+                label:"최근100회 출현",
+                data:Object.values(freq),
+                borderColor:"#6c5ce7",
+                tension:0.3
+            }]
+        }
+    });
+}
+
+function renderOverdue(){
+    let lastSeen=initCount();
+
+    lottoData.forEach((draw,i)=>{
+        draw.numbers.forEach(n=>{
+            lastSeen[n]=i;
+        });
+    });
+
+    const totalIndex=lottoData.length;
+
+    let overdue=Object.entries(lastSeen)
+        .map(([num,idx])=>[num,totalIndex-idx])
+        .sort((a,b)=>b[1]-a[1]);
+
+    overdue.slice(0,5).forEach(item=>{
+        document.getElementById("overdue").innerHTML+=
+        `<li>${item[0]}번 - ${item[1]}회 미출현</li>`;
+    });
+}
+
+function renderRangeDist(freq){
+    let ranges={
+        "1~10":0,
+        "11~20":0,
+        "21~30":0,
+        "31~40":0,
+        "41~45":0
+    };
+
+    for(let num in freq){
+        let n=parseInt(num);
+        if(n<=10) ranges["1~10"]+=freq[num];
+        else if(n<=20) ranges["11~20"]+=freq[num];
+        else if(n<=30) ranges["21~30"]+=freq[num];
+        else if(n<=40) ranges["31~40"]+=freq[num];
+        else ranges["41~45"]+=freq[num];
+    }
+
+    new Chart(document.getElementById("rangeDist"),{
+        type:'doughnut',
+        data:{
+            labels:Object.keys(ranges),
+            datasets:[{
+                data:Object.values(ranges)
+            }]
+        }
+    });
+}
+
+function renderBonus(){
+    const freq=calculateBonusFrequency(lottoData);
+    const sorted=sortDesc(freq);
+
+    sorted.slice(0,5).forEach((item,i)=>{
+        document.getElementById("bonusTop").innerHTML+=
+        `<li>${i+1}위 - ${item[0]}번 (${item[1]}회)</li>`;
+    });
 }
 
 loadLotto();
