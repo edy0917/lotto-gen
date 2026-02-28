@@ -8,22 +8,72 @@
 <meta property="og:image" content="https://luckyty.co.kr/og-image.png">
 <title>📊 역대 당첨번호</title>
 
-<!-- 애드센스 코드 넣는 자리 -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8410908069473405"
      crossorigin="anonymous"></script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "고급 로또 번호 생성기",
-  "url": "https://luckyty.co.kr",
-  "description": "구간별 추천 및 희귀 조합 분석을 제공하는 로또 번호 자동 생성 도구입니다.",
-  "applicationCategory": "GameApplication",
-  "operatingSystem": "All"
+
+<style>
+body{
+    font-family: Arial;
+    background:#f4f4f4;
+    text-align:center;
+    margin:20px;
 }
-</script>
+
+h2{
+    margin-bottom:20px;
+}
+
+.round-box{
+    background:white;
+    margin:10px auto;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    max-width:600px;
+}
+
+.ball{
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    margin:4px;
+    font-weight:bold;
+    color:white;
+    font-size:15px;
+}
+
+.yellow{ background:#fbc400; }
+.blue{ background:#69c8f2; }
+.red{ background:#ff7272; }
+.gray{ background:#aaaaaa; }
+.green{ background:#b0d840; }
+
+.bonus-label{
+    margin-left:10px;
+    font-weight:bold;
+}
+
+button{
+    padding:10px 18px;
+    margin:15px 5px;
+    border:none;
+    border-radius:8px;
+    background:#4caf50;
+    color:white;
+    cursor:pointer;
+}
+
+#pageInfo{
+    font-weight:bold;
+}
+</style>
 </head>
-    <body>
+
+<body>
+
 <h2>📊 역대 당첨번호</h2>
 
 <div id="lottoData"></div>
@@ -40,15 +90,21 @@ let lottoData=[];
 let page=1;
 const pageSize=50;
 
+/* 색상 결정 함수 */
+function getColorClass(num){
+    if(num<=9) return "yellow";
+    if(num<=19) return "blue";
+    if(num<=29) return "red";
+    if(num<=39) return "gray";
+    return "green";
+}
+
 /* JSON 로드 */
 async function loadLotto(){
-
     try{
         const res=await fetch("./lotto_data.json");
         lottoData=await res.json();
-
         renderPage();
-
     }catch(e){
         console.error(e);
     }
@@ -62,12 +118,24 @@ function renderPage(){
 
     let pageData=lottoData.slice(start,end);
 
-    let html=pageData.map(item=>`
-        <div style="border-bottom:1px solid #ddd;padding:10px">
-            <b>${item.round}회</b><br>
-            🎯 ${item.numbers.join(", ")} +<b> 보너스</b> ${item.bonus}
-        </div>
-    `).join("");
+    let html=pageData.map(item=>{
+
+        let balls=item.numbers.map(n=>
+            `<span class="ball ${getColorClass(n)}">${n}</span>`
+        ).join("");
+
+        let bonusBall=
+            `<span class="ball ${getColorClass(item.bonus)}">${item.bonus}</span>`;
+
+        return `
+            <div class="round-box">
+                <b>${item.round}회</b><br><br>
+                ${balls}
+                <span class="bonus-label">+ 보너스</span>
+                ${bonusBall}
+            </div>
+        `;
+    }).join("");
 
     document.getElementById("lottoData").innerHTML=html;
 
