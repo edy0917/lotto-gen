@@ -290,5 +290,18 @@ function generate(){
 }
 
 </script>
+<script>
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/service-worker.js')
+        .then(()=>{
+            console.log("SW 등록 성공");
+        })
+        .catch(err=>{
+            console.log("SW 등록 실패",err);
+        });
+    });
+}
+</script>
 </body>
 </html>
