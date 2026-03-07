@@ -278,7 +278,7 @@ function renderTrend(){
         options:{responsive:true,maintainAspectRatio:false}
     });
 }
-
+/*
 function renderOverdue(){
     let lastSeen=initCount();
     lottoData.forEach((draw,i)=>{
@@ -296,6 +296,31 @@ function renderOverdue(){
     const ul=document.getElementById("overdue");
     ul.innerHTML="";
     overdue.slice(0,5).forEach(item=>{
+        ul.innerHTML+=`<li>${item[0]}번 - ${item[1]}회 미출현</li>`;
+    });
+}*/
+function renderOverdue(){
+
+    let result=[];
+
+    for(let num=1; num<=45; num++){
+
+        let miss=0;
+
+        for(let i=0;i<lottoData.length;i++){
+            if(lottoData[i].numbers.includes(num)) break;
+            miss++;
+        }
+
+        result.push([num,miss]);
+    }
+
+    result.sort((a,b)=>b[1]-a[1]);
+
+    const ul=document.getElementById("overdue");
+    ul.innerHTML="";
+
+    result.slice(0,5).forEach(item=>{
         ul.innerHTML+=`<li>${item[0]}번 - ${item[1]}회 미출현</li>`;
     });
 }
